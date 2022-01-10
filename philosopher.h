@@ -6,7 +6,7 @@
 /*   By: jdidier <jdidier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/03 10:38:46 by jdidier           #+#    #+#             */
-/*   Updated: 2022/01/07 19:43:20 by jdidier          ###   ########.fr       */
+/*   Updated: 2022/01/10 23:30:56 by jdidier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,8 +40,11 @@ typedef struct	s_datas
 	int				time_to_eat;
 	int				time_to_sleep;
 	int				nbr_of_meal;
+	int				game_over;
+	long			start_time;
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	print;
+	pthread_mutex_t	*meal;
 }				t_datas;
 
 typedef struct s_philo

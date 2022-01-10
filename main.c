@@ -6,7 +6,7 @@
 /*   By: jdidier <jdidier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/03 10:38:22 by jdidier           #+#    #+#             */
-/*   Updated: 2022/01/07 19:48:20 by jdidier          ###   ########.fr       */
+/*   Updated: 2022/01/10 23:50:36 by jdidier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,10 @@ t_datas	set_datas(int argc, char **argv)
 		datas.nbr_of_meal = ft_atoi(argv[5]);
 	else
 		datas.nbr_of_meal = -1;
+	datas.start_time = get_timestamp(0);
+	datas.game_over = 0;
 	datas.forks = malloc(sizeof(pthread_mutex_t) * datas.nbr_of_philo);
+	datas.meal = malloc(sizeof(pthread_mutex_t) * datas.nbr_of_philo);
 	return (datas);
 }
 
@@ -75,30 +78,26 @@ void	*thread_function(void *varg)
 {
 	t_philo	*philo;
 	int		is_dead;
-	long	timer;
-
 
 	is_dead = 1;
 	philo = (t_philo *)varg;
 	//printf("start of thread_function of id: %d\n", philo->id);
-	philo->last_meal = get_timestamp(0);
 	while (is_dead)
 	{
-		timer = get_timestamp(0);
 		pthread_mutex_lock(&philo->datas->forks[philo->fork1]);
-		print_action(philo, get_timestamp(timer), FORK);
+		print_action(philo, get_timestamp(philo->datas->start_time), FORK);
 		pthread_mutex_lock(&philo->datas->forks[philo->fork2]);
-		print_action(philo, get_timestamp(timer), FORK);
-		philo->is_eating = 1;
-		print_action(philo, get_timestamp(timer), EAT);
+		print_action(philo, get_timestamp(philo->datas->start_time), FORK);
+		print_action(philo, get_timestamp(philo->datas->start_time), EAT);
 		ft_usleep(philo->datas->time_to_eat);
 		pthread_mutex_unlock(&philo->datas->forks[philo->fork1]);
 		pthread_mutex_unlock(&philo->datas->forks[philo->fork2]);
+		pthread_mutex_lock(&philo->datas->meal[philo->id]);
 		philo->last_meal = get_timestamp(0);
-		philo->is_eating = 0;
-		print_action(philo, get_timestamp(timer), EAT);
+		pthread_mutex_unlock(&philo->datas->meal[philo->id]);
+		print_action(philo, get_timestamp(philo->datas->start_time), EAT);
 		ft_usleep(philo->datas->time_to_sleep);
-		print_action(philo, get_timestamp(timer), THINK);
+		print_action(philo, get_timestamp(philo->datas->start_time), THINK);
 	}
 	//printf("end of thread_function of id: %d\n", philo->id);
 	return (NULL);
@@ -107,10 +106,15 @@ void	*thread_function(void *varg)
 void	run(t_datas *datas, t_philo *p)
 {
 	int	i;
+	long last_meal;
+	long time;
 	
 	i = 0;
 	while (i < datas->nbr_of_philo)
-		pthread_mutex_init(datas->forks + i++, NULL);
+	{
+		pthread_mutex_init(datas->forks + i, NULL);
+		pthread_mutex_init(datas->meal + i++, NULL);
+	}
 	pthread_mutex_init(&datas->print, NULL);
 	i = 0;
 	while (i < datas->nbr_of_philo)
@@ -118,12 +122,38 @@ void	run(t_datas *datas, t_philo *p)
 		pthread_create(&((p + i)->philo), NULL, thread_function, (p + i));
 		i++;
 	}
+	
+	while (!datas->game_over)
+	{
+		i = 0;
+		time = get_timestamp(datas->start_time);
+		while (i < datas->nbr_of_philo)
+		{
+			pthread_mutex_lock(&datas->meal[i]);
+			last_meal = (p +i)->last_meal;
+			pthread_mutex_unlock(&datas->meal[i]);
+			//printf("last_meal: %ld\n", (p +i)->last_meal);
+			if (last_meal + datas->time_to_die <= time)
+			{
+				pthread_mutex_lock(&datas->print);
+				if (!datas->game_over)
+					datas->game_over = 1;
+				print_action((p +i), get_timestamp(datas->start_time), DIE);
+				pthread_mutex_unlock(&datas->print);
+				break;
+			}
+			i++;
+		}
+	}
 	i = 0;
 	while (i < datas->nbr_of_philo)
 		pthread_join((p + i++)->philo, NULL);
 	i = 0;
 	while (i < datas->nbr_of_philo)
-		pthread_mutex_destroy(datas->forks + i++);
+	{
+		pthread_mutex_destroy(datas->forks + i);
+		pthread_mutex_destroy(datas->meal + i++);
+	}
 	pthread_mutex_destroy(&datas->print);
 }
 
@@ -182,6 +212,7 @@ int	main(int argc, char **argv)
 			//pthread_join(death_checker, NULL);
 			free(philos);
 			free(datas.forks);
+			free(datas.meal);
 		}
 		else
 			printf("ERROR. Program's arguments should be digit characters\n");
