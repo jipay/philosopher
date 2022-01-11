@@ -6,7 +6,7 @@
 /*   By: jdidier <jdidier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/03 10:38:22 by jdidier           #+#    #+#             */
-/*   Updated: 2022/01/10 23:50:36 by jdidier          ###   ########.fr       */
+/*   Updated: 2022/01/11 07:48:49 by jdidier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,6 @@ t_philo	new_philo(int id, t_datas *datas)
 
 	philo.id = id;
 	philo.datas = datas;
-	philo.is_eating = 0;
 	philo.last_meal = 0;
 	if (philo.id % 2 == 0)
 	{
@@ -93,7 +92,7 @@ void	*thread_function(void *varg)
 		pthread_mutex_unlock(&philo->datas->forks[philo->fork1]);
 		pthread_mutex_unlock(&philo->datas->forks[philo->fork2]);
 		pthread_mutex_lock(&philo->datas->meal[philo->id]);
-		philo->last_meal = get_timestamp(0);
+		philo->last_meal = get_timestamp(philo->datas->start_time);
 		pthread_mutex_unlock(&philo->datas->meal[philo->id]);
 		print_action(philo, get_timestamp(philo->datas->start_time), EAT);
 		ft_usleep(philo->datas->time_to_sleep);
@@ -131,8 +130,8 @@ void	run(t_datas *datas, t_philo *p)
 		{
 			pthread_mutex_lock(&datas->meal[i]);
 			last_meal = (p +i)->last_meal;
+			printf("last_meal: %ld\n", last_meal);
 			pthread_mutex_unlock(&datas->meal[i]);
-			//printf("last_meal: %ld\n", (p +i)->last_meal);
 			if (last_meal + datas->time_to_die <= time)
 			{
 				pthread_mutex_lock(&datas->print);

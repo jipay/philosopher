@@ -6,7 +6,7 @@
 /*   By: jdidier <jdidier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/03 10:38:46 by jdidier           #+#    #+#             */
-/*   Updated: 2022/01/10 23:30:56 by jdidier          ###   ########.fr       */
+/*   Updated: 2022/01/11 07:47:34 by jdidier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,6 @@ typedef struct s_philo
 {
 	int				fork1;
 	int				fork2;
-	int				is_eating;
 	unsigned int	id;
 	long			last_meal;
 	pthread_t		philo;
