@@ -6,11 +6,13 @@
 /*   By: jdidier <jdidier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/03 10:38:22 by jdidier           #+#    #+#             */
-/*   Updated: 2022/01/11 07:48:49 by jdidier          ###   ########.fr       */
+/*   Updated: 2022/01/11 18:34:10 by jdidier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philosopher.h"
+
+
 
 t_datas	set_datas(int argc, char **argv)
 {
@@ -38,6 +40,7 @@ t_philo	new_philo(int id, t_datas *datas)
 	philo.id = id;
 	philo.datas = datas;
 	philo.last_meal = 0;
+	philo.is_dead = 0;
 	if (philo.id % 2 == 0)
 	{
 		philo.fork1 = philo.id;
@@ -73,15 +76,61 @@ void	print_action(t_philo *philo, long time, char *str)
 	pthread_mutex_unlock(&philo->datas->print);
 }
 
+void	death_watcher(t_datas *datas, t_philo *p)
+{
+	int	i;
+	long last_meal;
+	long time;
+	
+	i = 0;
+	time = get_timestamp(datas->start_time);
+	//printf("time: %ld\n", time);
+	while (i < datas->nbr_of_philo)
+	{
+		if ((p + i)->is_dead || datas->game_over)
+			return;
+		//pthread_mutex_lock(&datas->meal[i]);
+		//pthread_mutex_lock(&datas->print);
+		last_meal = (p +i)->last_meal;
+		//printf("last_meal: %ld\n", last_meal);
+		//pthread_mutex_unlock(&datas->meal[i]);
+		//pthread_mutex_unlock(&datas->print);
+		if (last_meal + datas->time_to_die <= time)
+		{
+			pthread_mutex_lock(&datas->print);
+			if (!datas->game_over)
+				datas->game_over = 1;
+			pthread_mutex_unlock(&datas->print);
+			//pthread_mutex_lock(&datas->print);
+			print_action((p +i), get_timestamp(datas->start_time), DIE);
+			(p + i)->is_dead = 1;
+			return;
+		}
+		i++;
+	}
+	
+}
+
+void	init_mutex(t_datas *datas)
+{
+	int	i;
+
+	i = 0;
+	while (i < datas->nbr_of_philo)
+	{
+		pthread_mutex_init(datas->forks + i, NULL);
+		pthread_mutex_init(datas->meal + i++, NULL);
+	}
+	pthread_mutex_init(&datas->print, NULL);
+}
+
 void	*thread_function(void *varg)
 {
 	t_philo	*philo;
-	int		is_dead;
 
-	is_dead = 1;
 	philo = (t_philo *)varg;
 	//printf("start of thread_function of id: %d\n", philo->id);
-	while (is_dead)
+	while (!philo->is_dead && !philo->datas->game_over)
 	{
 		pthread_mutex_lock(&philo->datas->forks[philo->fork1]);
 		print_action(philo, get_timestamp(philo->datas->start_time), FORK);
@@ -91,10 +140,10 @@ void	*thread_function(void *varg)
 		ft_usleep(philo->datas->time_to_eat);
 		pthread_mutex_unlock(&philo->datas->forks[philo->fork1]);
 		pthread_mutex_unlock(&philo->datas->forks[philo->fork2]);
-		pthread_mutex_lock(&philo->datas->meal[philo->id]);
+		pthread_mutex_lock(&philo->datas->print);
 		philo->last_meal = get_timestamp(philo->datas->start_time);
-		pthread_mutex_unlock(&philo->datas->meal[philo->id]);
-		print_action(philo, get_timestamp(philo->datas->start_time), EAT);
+		pthread_mutex_unlock(&philo->datas->print);
+		print_action(philo, get_timestamp(philo->datas->start_time), SLEEP);
 		ft_usleep(philo->datas->time_to_sleep);
 		print_action(philo, get_timestamp(philo->datas->start_time), THINK);
 	}
@@ -105,16 +154,8 @@ void	*thread_function(void *varg)
 void	run(t_datas *datas, t_philo *p)
 {
 	int	i;
-	long last_meal;
-	long time;
 	
-	i = 0;
-	while (i < datas->nbr_of_philo)
-	{
-		pthread_mutex_init(datas->forks + i, NULL);
-		pthread_mutex_init(datas->meal + i++, NULL);
-	}
-	pthread_mutex_init(&datas->print, NULL);
+	init_mutex(datas);
 	i = 0;
 	while (i < datas->nbr_of_philo)
 	{
@@ -123,27 +164,8 @@ void	run(t_datas *datas, t_philo *p)
 	}
 	
 	while (!datas->game_over)
-	{
-		i = 0;
-		time = get_timestamp(datas->start_time);
-		while (i < datas->nbr_of_philo)
-		{
-			pthread_mutex_lock(&datas->meal[i]);
-			last_meal = (p +i)->last_meal;
-			printf("last_meal: %ld\n", last_meal);
-			pthread_mutex_unlock(&datas->meal[i]);
-			if (last_meal + datas->time_to_die <= time)
-			{
-				pthread_mutex_lock(&datas->print);
-				if (!datas->game_over)
-					datas->game_over = 1;
-				print_action((p +i), get_timestamp(datas->start_time), DIE);
-				pthread_mutex_unlock(&datas->print);
-				break;
-			}
-			i++;
-		}
-	}
+		death_watcher(datas, p);
+	printf("GAME OVER\n");
 	i = 0;
 	while (i < datas->nbr_of_philo)
 		pthread_join((p + i++)->philo, NULL);
@@ -155,37 +177,6 @@ void	run(t_datas *datas, t_philo *p)
 	}
 	pthread_mutex_destroy(&datas->print);
 }
-
-/*
-void	*check_death(void *varg)
-{
-	t_philo	*philos;
-	t_datas	*datas;
-	int		i;
-
-	philos = (t_philo *)varg;
-	datas = philos->datas;
-	i = 0;
-	while (i < datas->nbr_of_philo)
-	{
-		if(!(philos + i)->is_eating)
-		{
-			//if 
-		}
-		i++;
-	}
-	
-	if (last_meal > 0)
-	{
-		if (get_timestamp(last_meal) > philo->datas->time_to_die)
-		{
-			printf("%ld %d die\n", get_timestamp(timer), philo->id + 1);
-			break;
-		}	
-	}
-	
-}
-*/
 
 int	main(int argc, char **argv)
 {
