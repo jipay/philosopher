@@ -6,7 +6,7 @@
 /*   By: jdidier <jdidier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/03 10:50:29 by jdidier           #+#    #+#             */
-/*   Updated: 2022/01/06 12:54:01 by jdidier          ###   ########.fr       */
+/*   Updated: 2022/01/14 15:41:59 by jdidier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,6 @@ int	check_int(char *str)
 		return (0);
 }
 
-
 long	get_timestamp(long start_ts)
 {
 	struct timeval	tv;
@@ -72,13 +71,15 @@ long	get_timestamp(long start_ts)
 	return (((tv.tv_sec * 1000) + tv.tv_usec / 1000) - start_ts);
 }
 
-void	ft_usleep(int duration)
+void	ft_usleep(int duration, t_datas *datas)
 {
-	long start;
-	long current;
+	long	start;
+	long	current;
 
 	start = get_timestamp(0);
 	current = start;
+	if (get_game_over(datas))
+		return ;
 	while (duration > current - start)
 	{
 		usleep(100);

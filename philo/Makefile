@@ -6,7 +6,7 @@
 #    By: jdidier <jdidier@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/11/14 15:16:41 by jdidier           #+#    #+#              #
-#    Updated: 2022/01/03 13:22:36 by jdidier          ###   ########.fr        #
+#    Updated: 2022/01/14 18:30:42 by jdidier          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,13 +14,14 @@ NAME= philo
 
 CC=gcc
 
-CFLAGS= -Wall -Wextra -Werror -lpthread -g3 -fsanitize=address
+CFLAGS= -Wall -Wextra -Werror -pthread 
+CFLAGS+= -g3 -fsanitize=thread
 
 
 
 RM=rm -f
 
-SRCS= main.c utils.c libft.c
+SRCS= main.c utils.c libft.c philo.c datas.c value_management.c
 
 SRCS_BONUS=
 
