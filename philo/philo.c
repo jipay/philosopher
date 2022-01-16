@@ -6,7 +6,7 @@
 /*   By: jdidier <jdidier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/13 16:10:36 by jdidier           #+#    #+#             */
-/*   Updated: 2022/01/14 16:10:07 by jdidier          ###   ########.fr       */
+/*   Updated: 2022/01/16 22:07:18 by jdidier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,10 +29,8 @@ int	has_all_eat_their_meal(t_datas *datas, t_philo *p)
 void	death_watcher(t_datas *datas, t_philo *p)
 {
 	int		i;
-	long	time;
 
 	i = 0;
-	time = get_timestamp(datas->start_time);
 	if (datas->nbr_of_meal != -1 && has_all_eat_their_meal(datas, p))
 	{
 		set_game_over(datas, 1);
@@ -42,7 +40,8 @@ void	death_watcher(t_datas *datas, t_philo *p)
 	{
 		if (get_game_over(datas))
 			return ;
-		if (get_last_meal(p + i) + datas->time_to_die <= time)
+		if (get_last_meal(p + i) + datas->time_to_die
+			<= get_timestamp(datas->start_time))
 		{
 			pthread_mutex_lock(&datas->mutex);
 			datas->game_over = 1;
@@ -89,7 +88,10 @@ void	run(t_datas *datas, t_philo *p)
 	while (i < datas->nbr_of_philo)
 	{
 		pthread_create(&((p + i)->philo), NULL, thread_function, (p + i));
-		i++;
+		i += 2;
+		if (i >= datas->nbr_of_philo && i % 2 == 0)
+			i = 1;
+		usleep(1000);
 	}
 	while (!get_game_over(datas))
 		death_watcher(datas, p);

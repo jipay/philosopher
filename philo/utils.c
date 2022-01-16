@@ -6,7 +6,7 @@
 /*   By: jdidier <jdidier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/03 10:50:29 by jdidier           #+#    #+#             */
-/*   Updated: 2022/01/14 15:41:59 by jdidier          ###   ########.fr       */
+/*   Updated: 2022/01/16 21:59:33 by jdidier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,6 +82,8 @@ void	ft_usleep(int duration, t_datas *datas)
 		return ;
 	while (duration > current - start)
 	{
+		if (get_game_over(datas))
+			break;
 		usleep(100);
 		current = get_timestamp(0);
 	}

@@ -6,7 +6,7 @@
 /*   By: jdidier <jdidier@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/03 10:38:22 by jdidier           #+#    #+#             */
-/*   Updated: 2022/01/14 18:39:17 by jdidier          ###   ########.fr       */
+/*   Updated: 2022/01/16 22:00:41 by jdidier          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,14 @@ void	print_action(t_philo *philo, long time, char *str)
 
 void	launcher(t_datas *datas, t_philo *philos)
 {
-	run(&datas, philos);
+	if (datas->nbr_of_philo == 1)
+	{
+		printf("%ld\t%d %s\n", get_timestamp(datas->start_time), 1, FORK);
+		usleep(datas->time_to_die * 1000);
+		printf("%ld\t%d %s\n", get_timestamp(datas->start_time), 1, DIE);
+	}
+	else
+		run(datas, philos);
 	free(philos);
 	free(datas->forks);
 }
